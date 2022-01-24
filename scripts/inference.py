@@ -66,7 +66,15 @@ class SemanticSegmentation:
     def __init__(self, parameters):
         self.sem_seg_start_time = time.time()
         self.parameters = parameters
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if not self.parameters['use_CPU_only']:
+            print('Is CUDA available?', torch.cuda.is_available())
+            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        else:
+            self.device = torch.device('cpu')
+
+        print("Performing inference on device:", self.device)
+        if not torch.cuda.is_available():
+            print("Please be aware that inference will be much slower on CPU. An Nvidia GPU is highly recommended.")
         self.filename = self.parameters['point_cloud_filename'].replace('\\', '/')
         self.directory = os.path.dirname(os.path.realpath(self.filename)).replace('\\', '/') + '/'
         self.filename = self.filename.split('/')[-1]
@@ -87,10 +95,15 @@ class SemanticSegmentation:
                                  num_workers=0)
 
         model = Net(num_classes=4).to(self.device)
-        model.load_state_dict(torch.load('../model/' + self.parameters['model_filename']), strict=False)
+        if self.parameters['use_CPU_only']:
+            model.load_state_dict(torch.load('../model/' + self.parameters['model_filename'], map_location=torch.device('cpu')), strict=False)
+        else:
+            model.load_state_dict(torch.load('../model/' + self.parameters['model_filename']), strict=False)
+
         model.eval()
         num_boxes = test_dataset.__len__()
         with torch.no_grad():
+
             self.output_point_cloud = np.zeros((0, 3 + 4))
             output_list = []
             for i, data in enumerate(test_loader):

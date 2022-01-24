@@ -81,7 +81,7 @@ class PostProcessing:
                     grid_points = np.vstack((grid_points, np.array([[x, y, z]])))
 
         if self.parameters['plot_radius'] > 0:
-            plot_centre = [[float(self.plot_summary['Plot Centre Northing']), float(self.plot_summary['Plot Centre Easting'])]]
+            plot_centre = [[float(self.plot_summary['Plot Centre X']), float(self.plot_summary['Plot Centre Y'])]]
             crop_radius = self.parameters['plot_radius'] + self.parameters['plot_radius_buffer']
             grid_points = grid_points[np.linalg.norm(grid_points[:, :2] - plot_centre, axis=1) <= crop_radius]
 
@@ -98,7 +98,6 @@ class PostProcessing:
         save_file(self.output_dir + 'DTM.las', self.DTM)
 
         self.convexhull = spatial.ConvexHull(self.DTM[:, :2])
-        self.convex_hull_points = self.terrain_points[self.convexhull.vertices, :2]
         self.plot_area = self.convexhull.volume/10000  # volume is area in 2d.
         print("Plot area is approximately", self.plot_area, 'ha')
 
