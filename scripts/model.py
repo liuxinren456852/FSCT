@@ -14,8 +14,7 @@ class SAModule(torch.nn.Module):
 
     def forward(self, x, pos, batch):
         idx = fps(pos, batch, ratio=self.ratio)
-        row, col = radius(pos, pos[idx], self.r, batch, batch[idx],
-                          max_num_neighbors=64)
+        row, col = radius(pos, pos[idx], self.r, batch, batch[idx], max_num_neighbors=64)
         edge_index = torch.stack([col, row], dim=0)
         x = self.conv(x, (pos, pos[idx]), edge_index)
         pos, batch = pos[idx], batch[idx]
@@ -36,10 +35,7 @@ class GlobalSAModule(torch.nn.Module):
 
 
 def MLP(channels, batch_norm=True):
-    return Seq(*[
-            Seq(Lin(channels[i - 1], channels[i]), ReLU(), BN(channels[i]))
-            for i in range(1, len(channels))
-    ])
+    return Seq(*[Seq(Lin(channels[i - 1], channels[i]), ReLU(), BN(channels[i])) for i in range(1, len(channels))])
 
 
 class FPModule(torch.nn.Module):
@@ -59,7 +55,6 @@ class FPModule(torch.nn.Module):
 class Net(torch.nn.Module):
     def __init__(self, num_classes):
         super(Net, self).__init__()
-        # idea why this isn't working... too many points?
         self.sa1_module = SAModule(0.1, 0.2, MLP([3, 128, 256, 512]))
         self.sa2_module = SAModule(0.05, 0.4, MLP([512 + 3, 512, 1024, 1024]))
         self.sa3_module = GlobalSAModule(MLP([1024 + 3, 1024, 2048, 2048]))

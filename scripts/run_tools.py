@@ -6,11 +6,23 @@ from report_writer import ReportWriter
 import glob
 import tkinter as tk
 import tkinter.filedialog as fd
-import glob
+import os
 
 
-def FSCT(parameters, preprocess=True, segmentation=True, postprocessing=True, measure_plot=True, make_report=False, clean_up_files=False):
-    print(parameters['point_cloud_filename'])
+def FSCT(
+    parameters,
+    preprocess=True,
+    segmentation=True,
+    postprocessing=True,
+    measure_plot=True,
+    make_report=False,
+    clean_up_files=False,
+):
+    print("Current point cloud being processed: ", parameters["point_cloud_filename"])
+    if parameters["num_cpu_cores"] == 0:
+        print("Using default number of CPU cores (all of them).")
+        parameters["num_cpu_cores"] = os.cpu_count()
+    print("Processing using ", parameters["num_cpu_cores"], "/", os.cpu_count(), " CPU cores.")
 
     if preprocess:
         preprocessing = Preprocessing(parameters)
@@ -46,10 +58,10 @@ def FSCT(parameters, preprocess=True, segmentation=True, postprocessing=True, me
 def directory_mode():
     root = tk.Tk()
     point_clouds_to_process = []
-    directory = fd.askdirectory(parent=root, title='Choose directory')
-    unfiltered_point_clouds_to_process = glob.glob(directory + '/**/*.las', recursive=True)
+    directory = fd.askdirectory(parent=root, title="Choose directory")
+    unfiltered_point_clouds_to_process = glob.glob(directory + "/**/*.las", recursive=True)
     for i in unfiltered_point_clouds_to_process:
-        if 'FSCT_output' not in i:
+        if "FSCT_output" not in i:
             point_clouds_to_process.append(i)
     root.destroy()
     return point_clouds_to_process
@@ -57,7 +69,8 @@ def directory_mode():
 
 def file_mode():
     root = tk.Tk()
-    point_clouds_to_process = fd.askopenfilenames(parent=root, title='Choose files',
-                                                  filetypes=[("LAS", "*.las"), ("LAZ", "*.laz"), ("CSV", "*.csv")])
+    point_clouds_to_process = fd.askopenfilenames(
+        parent=root, title="Choose files", filetypes=[("LAS", "*.las"), ("LAZ", "*.laz"), ("CSV", "*.csv")]
+    )
     root.destroy()
     return point_clouds_to_process
